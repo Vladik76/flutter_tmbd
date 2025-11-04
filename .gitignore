@@ -1,6 +1,3 @@
-# Игнорировать всё из build, кроме web-сборки
-/build/*
-!/build/web/**
 
 # Кэш и временные файлы Flutter
 .dart_tool/
@@ -17,3 +14,11 @@
 # Env файлы (если используешь flutter_dotenv)
 .env
 .env.*
+
+# Игнорируем весь build...
+/build/*
+
+# ...НО возвращаем папку web и всё внутри неё
+!/build/web
+!/build/web/**
+
