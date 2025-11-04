@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher_string.dart';
+
 import '../../../../core/env.dart';
 
 class MovieDetailsPage extends StatefulWidget {
@@ -116,12 +117,80 @@ class _VideosSection extends StatelessWidget {
     await launchUrlString(url, mode: LaunchMode.externalApplication);
   }
 
+  Widget _videoCard(BuildContext context, Map<String, dynamic> v) {
+    final id = v['key'] as String;
+    final title = (v['name'] ?? 'Trailer').toString();
+    final subtitle = [
+      (v['type'] ?? '').toString(),
+      if (v['official'] == true) 'Official',
+    ].where((e) => e.isNotEmpty).join(' • ');
+    final thumb = 'https://img.youtube.com/vi/$id/hqdefault.jpg';
+
+    Future<void> open() async {
+      if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
+        if (context.mounted) context.push('/video/$id');
+        return;
+      }
+      final ok = await _ytEmbeddable(id);
+      if (ok) {
+        if (context.mounted) context.push('/video/$id');
+      } else {
+        await _openExternally(id);
+      }
+    }
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: open,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 160,
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Image.network(
+                  thumb,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const ColoredBox(
+                    color: Color(0x11000000),
+                    child: Center(child: Icon(Icons.play_circle_outline)),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Text(subtitle),
+                  ],
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Open in YouTube',
+              onPressed: () => _openExternally(id),
+              icon: const Icon(Icons.open_in_new),
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final rawList = (details['videos']?['results'] as List? ?? [])
+    final raw = (details['videos']?['results'] as List? ?? [])
         .cast<Map<String, dynamic>>();
 
-    final yt = rawList
+    final yt = raw
         .where((v) => (v['site'] ?? '').toString().toLowerCase() == 'youtube')
         .map((v) {
           final key = _ytId((v['key'] ?? '').toString());
@@ -147,43 +216,11 @@ class _VideosSection extends StatelessWidget {
       children: [
         Text('Videos', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
-        ListView.separated(
+        ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: yt.length,
-          separatorBuilder: (_, __) => const Divider(height: 8),
-          itemBuilder: (context, i) {
-            final v = yt[i];
-            final id = v['key'] as String;
-            final title = (v['name'] ?? 'Trailer').toString();
-            final subtitle = [
-              (v['type'] ?? '').toString(),
-              if (v['official'] == true) 'Official',
-            ].where((e) => e.isNotEmpty).join(' • ');
-
-            return ListTile(
-              leading: const Icon(Icons.play_circle_fill),
-              title: Text(title),
-              subtitle: Text(subtitle),
-              onTap: () async {
-                if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
-                  if (context.mounted) context.push('/video/$id');
-                  return;
-                }
-                final ok = await _ytEmbeddable(id);
-                if (ok) {
-                  if (context.mounted) context.push('/video/$id');
-                } else {
-                  await _openExternally(id);
-                }
-              },
-              trailing: IconButton(
-                tooltip: 'Open in YouTube',
-                icon: const Icon(Icons.open_in_new),
-                onPressed: () => _openExternally(id),
-              ),
-            );
-          },
+          itemBuilder: (c, i) => _videoCard(c, yt[i]),
         ),
       ],
     );

@@ -28,8 +28,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     } else if (_isMobile) {
       _guardPlayOnMobile();
     } else {
-      // desktop: открываем внешне
-      _checked = true;
+      _checked = true; // desktop: показываем фолбэк
       setState(() {});
     }
   }

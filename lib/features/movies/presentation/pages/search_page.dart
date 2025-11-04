@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../core/env.dart';
 import '../widgets/poster_tile.dart';
 

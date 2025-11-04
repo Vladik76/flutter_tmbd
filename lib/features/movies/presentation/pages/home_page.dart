@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../../core/env.dart';
 import '../widgets/poster_tile.dart';
-import 'package:go_router/go_router.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -43,8 +44,8 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Popular'),
         actions: [
           IconButton(
-            onPressed: () => context.push('/search'),
             icon: const Icon(Icons.search),
+            onPressed: () => context.push('/search'),
           ),
         ],
       ),
@@ -63,8 +64,9 @@ class _HomePageState extends State<HomePage> {
             );
           }
           final movies = snap.data ?? const [];
-          if (movies.isEmpty) return const Center(child: Text('No movies'));
-
+          if (movies.isEmpty) {
+            return const Center(child: Text('No movies'));
+          }
           return GridView.builder(
             padding: const EdgeInsets.all(12),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

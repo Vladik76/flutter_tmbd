@@ -21,17 +21,17 @@ class PosterTile extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
-      child: Material(
-        color: Colors.grey.shade200,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        elevation: 2,
         child: InkWell(
           onTap: () => context.push('/movie/$movieId'),
           child: url != null
               ? Ink.image(
                   image: NetworkImage(url),
                   fit: BoxFit.cover,
-                  child: const SizedBox.expand(),
                 )
-              : const SizedBox.expand(),
+              : const Center(child: Icon(Icons.movie_outlined)),
         ),
       ),
     );
