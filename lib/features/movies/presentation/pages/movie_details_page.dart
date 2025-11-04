@@ -68,29 +68,216 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
           : _error.isNotEmpty
               ? Center(
                   child: Padding(
-                      padding: const EdgeInsets.all(16), child: Text(_error)))
+                    padding: const EdgeInsets.all(16),
+                    child: Text(_error),
+                  ),
+                )
               : d == null
                   ? const Center(child: Text('No details'))
-                  : ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        if ((d['title'] ?? d['name']) != null)
-                          Text(
-                            (d['title'] ?? d['name']).toString(),
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                        if ((d['overview'] ?? '').toString().isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(d['overview']),
-                        ],
-                        const SizedBox(height: 24),
-                        _VideosSection(details: d),
-                      ],
-                    ),
+                  : _Content(details: d),
     );
   }
 }
 
+/// Pretty, information-dense layout with backdrop, poster, meta, overview, and videos.
+class _Content extends StatelessWidget {
+  const _Content({required this.details});
+  final Map<String, dynamic> details;
+
+  String _img(String? path, String size) => (path == null || path.isEmpty)
+      ? ''
+      : 'https://image.tmdb.org/t/p/$size$path';
+
+  @override
+  Widget build(BuildContext context) {
+    final title = (details['title'] ?? details['name'] ?? '').toString();
+    final overview = (details['overview'] ?? '').toString();
+    final poster = _img(details['poster_path'] as String?, 'w342');
+    final backdrop = _img(details['backdrop_path'] as String?, 'w780');
+    final vote = (details['vote_average'] ?? 0.0) * 1.0;
+    final genres = ((details['genres'] as List?) ?? [])
+        .cast<Map>()
+        .map((g) => g['name'].toString())
+        .toList();
+    final runtime = details['runtime'];
+    final date = (details['release_date'] ?? '').toString();
+
+    return ListView(
+      children: [
+        // Backdrop header
+        if (backdrop.isNotEmpty)
+          _BackdropHeader(imageUrl: backdrop, title: title, voteAverage: vote),
+
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: LayoutBuilder(
+            builder: (context, c) {
+              final isWide = c.maxWidth > 700;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Poster
+                  if (poster.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        poster,
+                        width: isWide ? 220 : 140,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  if (poster.isNotEmpty) const SizedBox(width: 16),
+
+                  // Meta + overview
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (poster.isEmpty)
+                          Text(title,
+                              style: Theme.of(context).textTheme.headlineSmall),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if (date.isNotEmpty)
+                              _Chip(icon: Icons.event, label: date),
+                            if (runtime is num && runtime > 0)
+                              _Chip(
+                                  icon: Icons.access_time,
+                                  label: '${runtime}m'),
+                            if (vote > 0)
+                              _Chip(
+                                  icon: Icons.star_rounded,
+                                  label: vote.toStringAsFixed(1)),
+                          ],
+                        ),
+                        if (genres.isNotEmpty) const SizedBox(height: 10),
+                        if (genres.isNotEmpty)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: genres
+                                .map((g) => Chip(
+                                      label: Text(g),
+                                      backgroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceVariant,
+                                    ))
+                                .toList(),
+                          ),
+                        const SizedBox(height: 16),
+                        if (overview.isNotEmpty) ...[
+                          Text('Overview',
+                              style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: 6),
+                          Text(overview),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+
+        // Videos
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+          child: _VideosSection(details: details),
+        ),
+      ],
+    );
+  }
+}
+
+class _BackdropHeader extends StatelessWidget {
+  const _BackdropHeader({
+    required this.imageUrl,
+    required this.title,
+    required this.voteAverage,
+  });
+
+  final String imageUrl;
+  final String title;
+  final double voteAverage;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(imageUrl, fit: BoxFit.cover),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Colors.black38],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 12,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      shadows: [Shadow(blurRadius: 2, color: Colors.black)],
+                    ),
+                  ),
+                ),
+                if (voteAverage > 0) ...[
+                  const SizedBox(width: 12),
+                  const Icon(Icons.star_rounded, color: Colors.amber, size: 22),
+                  const SizedBox(width: 4),
+                  Text(
+                    voteAverage.toStringAsFixed(1),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      shadows: [Shadow(blurRadius: 2, color: Colors.black)],
+                    ),
+                  ),
+                ]
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Icon(icon, size: 16),
+      label: Text(label),
+    );
+  }
+}
+
+/// Videos list with thumbnail preview and Android/iOS embed guard.
 class _VideosSection extends StatelessWidget {
   const _VideosSection({required this.details});
   final Map<String, dynamic> details;
@@ -115,6 +302,48 @@ class _VideosSection extends StatelessWidget {
   Future<void> _openExternally(String id) async {
     final url = 'https://www.youtube.com/watch?v=$id';
     await launchUrlString(url, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final raw = (details['videos']?['results'] as List? ?? [])
+        .cast<Map<String, dynamic>>();
+
+    final yt = raw
+        .where((v) => (v['site'] ?? '').toString().toLowerCase() == 'youtube')
+        .map((v) {
+          final key = _ytId((v['key'] ?? '').toString());
+          return {...v, 'key': key};
+        })
+        .where((v) => (v['key'] as String).length == 11)
+        .toList();
+
+    if (yt.isEmpty) return const SizedBox.shrink();
+
+    // Prioritize official trailers
+    yt.sort((a, b) {
+      final aPri =
+          ((a['type'] ?? '').toString().toLowerCase() == 'trailer' ? 1 : 0) +
+              ((a['official'] == true) ? 1 : 0);
+      final bPri =
+          ((b['type'] ?? '').toString().toLowerCase() == 'trailer' ? 1 : 0) +
+              ((b['official'] == true) ? 1 : 0);
+      return bPri.compareTo(aPri);
+    });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Videos', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 8),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: yt.length,
+          itemBuilder: (c, i) => _videoCard(c, yt[i]),
+        ),
+      ],
+    );
   }
 
   Widget _videoCard(BuildContext context, Map<String, dynamic> v) {
@@ -182,47 +411,6 @@ class _VideosSection extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final raw = (details['videos']?['results'] as List? ?? [])
-        .cast<Map<String, dynamic>>();
-
-    final yt = raw
-        .where((v) => (v['site'] ?? '').toString().toLowerCase() == 'youtube')
-        .map((v) {
-          final key = _ytId((v['key'] ?? '').toString());
-          return {...v, 'key': key};
-        })
-        .where((v) => (v['key'] as String).length == 11)
-        .toList();
-
-    if (yt.isEmpty) return const SizedBox.shrink();
-
-    yt.sort((a, b) {
-      final aPri =
-          ((a['type'] ?? '').toString().toLowerCase() == 'trailer' ? 1 : 0) +
-              ((a['official'] == true) ? 1 : 0);
-      final bPri =
-          ((b['type'] ?? '').toString().toLowerCase() == 'trailer' ? 1 : 0) +
-              ((b['official'] == true) ? 1 : 0);
-      return bPri.compareTo(aPri);
-    });
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Videos', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: yt.length,
-          itemBuilder: (c, i) => _videoCard(c, yt[i]),
-        ),
-      ],
     );
   }
 }
