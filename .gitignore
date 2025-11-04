@@ -1,14 +1,19 @@
-# Flutter build outputs
-/build/
-/!build/web/**
+# Игнорировать всё из build, кроме web-сборки
+/build/*
+!/build/web/**
 
-# IDE stuff
-.idea/
-.vscode/
+# Кэш и временные файлы Flutter
+.dart_tool/
 .packages
+.pub/
 .flutter-plugins
 .flutter-plugins-dependencies
 
-# Environment
+# IDE и система
+.idea/
+.vscode/
+.DS_Store
+
+# Env файлы (если используешь flutter_dotenv)
 .env
 .env.*
