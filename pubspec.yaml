@@ -30,7 +30,7 @@ dependencies:
   webview_flutter_android: ^4.10.5
   http: ^1.5.0
 
-dependency_overrides: 
+dependency_overrides:
   webview_flutter_wkwebview: 3.11.0
 
 dev_dependencies:
