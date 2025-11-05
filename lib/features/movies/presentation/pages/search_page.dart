@@ -1,7 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/env.dart';
+import '../../data/movies_service.dart';
 import '../widgets/poster_tile.dart';
 
 class SearchPage extends StatefulWidget {
@@ -12,25 +11,12 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  final _svc = MoviesService();
   final _controller = TextEditingController();
-  late final Dio _dio;
+
   List<Map<String, dynamic>> _results = const [];
   bool _loading = false;
   String _error = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _dio = Dio(
-      BaseOptions(
-        baseUrl: 'https://api.themoviedb.org/3',
-        headers: {
-          'accept': 'application/json',
-          'Authorization': 'Bearer ${Env.tmdbV4Token}',
-        },
-      ),
-    );
-  }
 
   Future<void> _search(String q) async {
     if (q.trim().isEmpty) return;
@@ -39,14 +25,7 @@ class _SearchPageState extends State<SearchPage> {
       _error = '';
     });
     try {
-      final res = await _dio.get('/search/movie', queryParameters: {
-        'query': q,
-        'include_adult': false,
-        'language': Env.language,
-        'page': 1,
-      });
-      _results =
-          (res.data['results'] as List? ?? []).cast<Map<String, dynamic>>();
+      _results = await _svc.searchMovies(q);
     } catch (e) {
       _error = '$e';
     } finally {

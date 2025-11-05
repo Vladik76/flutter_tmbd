@@ -1,8 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/env.dart';
+import '../../data/movies_service.dart';
 import '../widgets/poster_tile.dart';
 
 class HomePage extends StatefulWidget {
@@ -13,28 +12,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late final Dio _dio;
+  final _svc = MoviesService();
+
+  late Future<List<Map<String, dynamic>>> _future;
 
   @override
   void initState() {
     super.initState();
-    _dio = Dio(
-      BaseOptions(
-        baseUrl: 'https://api.themoviedb.org/3',
-        headers: {
-          'accept': 'application/json',
-          'Authorization': 'Bearer ${Env.tmdbV4Token}',
-        },
-      ),
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchPopular({int page = 1}) async {
-    final res = await _dio.get('/movie/popular', queryParameters: {
-      'language': Env.language,
-      'page': page,
-    });
-    return (res.data['results'] as List? ?? []).cast<Map<String, dynamic>>();
+    _future = _svc.getPopular();
   }
 
   @override
@@ -50,7 +35,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _fetchPopular(),
+        future: _future,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
@@ -64,9 +49,8 @@ class _HomePageState extends State<HomePage> {
             );
           }
           final movies = snap.data ?? const [];
-          if (movies.isEmpty) {
-            return const Center(child: Text('No movies'));
-          }
+          if (movies.isEmpty) return const Center(child: Text('No movies'));
+
           return GridView.builder(
             padding: const EdgeInsets.all(12),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
