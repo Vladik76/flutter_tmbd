@@ -20,12 +20,7 @@ class MovieCard extends StatelessWidget {
         onTap: (id == null)
             ? null
             : () {
-                // Use the named route defined in app_router.dart:
-                // GoRoute name: 'movie_details', path: '/movie/:id'
-                context.pushNamed(
-                  'movie_details',
-                  pathParameters: {'id': id.toString()},
-                );
+                context.go('/movies/$id');
               },
         borderRadius: BorderRadius.circular(12),
         child: ClipRRect(

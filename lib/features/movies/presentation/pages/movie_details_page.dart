@@ -160,7 +160,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                                             label: Text(g),
                                             backgroundColor: Theme.of(context)
                                                 .colorScheme
-                                                .surfaceVariant,
+                                                .surfaceContainerHighest,
                                           ),
                                         )
                                         .toList(),
@@ -389,12 +389,12 @@ class _HorizontalTrailers extends StatelessWidget {
 
           Future<void> open() async {
             if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
-              if (context.mounted) context.push('/video/$id');
+              if (context.mounted) context.go('/video/$id');
               return;
             }
             final ok = await _ytEmbeddable(id);
             if (ok) {
-              if (context.mounted) context.push('/video/$id');
+              if (context.mounted) context.go('/video/$id');
             } else {
               await _openExternally(id);
             }

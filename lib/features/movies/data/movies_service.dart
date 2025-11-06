@@ -50,7 +50,7 @@ class MoviesService {
   /// Extract only YouTube videos (trailer/teaser/clip) and normalize keys to 11-char ID.
   List<Map<String, dynamic>> youtubeVideosFromDetails(
       Map<String, dynamic> details) {
-    String _ytId(String raw) {
+    String ytId(String raw) {
       final m = RegExp(r'([A-Za-z0-9_-]{11})').firstMatch(raw);
       return m?.group(1) ?? raw;
     }
@@ -63,7 +63,7 @@ class MoviesService {
           final t = (v['type'] ?? '').toString().toLowerCase();
           return t == 'trailer' || t == 'teaser' || t == 'clip';
         })
-        .map((v) => {...v, 'key': _ytId((v['key'] ?? '').toString())})
+        .map((v) => {...v, 'key': ytId((v['key'] ?? '').toString())})
         .where((v) => (v['key'] as String).length == 11)
         .toList();
 

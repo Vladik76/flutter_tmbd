@@ -25,7 +25,7 @@ class PosterTile extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         elevation: 2,
         child: InkWell(
-          onTap: () => context.push('/movie/$movieId'),
+          onTap: () => context.go('/movie/$movieId'),
           child: url != null
               ? Ink.image(
                   image: NetworkImage(url),
